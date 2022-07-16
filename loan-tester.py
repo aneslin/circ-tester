@@ -83,59 +83,43 @@ print("Script starting at: %s" % startTime)
 s = requests.Session()
 s.headers= postHeaders
 
-def fetch_json(server, param, session):
-    url = '{}{}'.format(server, param)
+def fetch_json(server, session, *args ):
+    if args:
+        url = f'{server}{"".join(args)}'
+    else:
+        url=server
     req = session.get(url)
+    
     return req.json()
 
 # fetch patron groups
-#patronGroupsUrl = '{}{}'.format(testServer, '/groups?limit=1000')
-#patronGroupsRequest = s.get(patronGroupsUrl)
-patronGroupsJson = fetch_json(testServer,'/groups?limit=1000', s )
-# fetch loan types
+patronGroupsJson = fetch_json(testServer,s,'/groups?limit=1000')
 
-#loanTypesUrl = '{}{}'.format(testServer, '/loan-types?limit=1000')
-#loanTypesRequest = s.get(loanTypesUrl)
-loanTypesJson = fetch_json(testServer,'/loan-types?limit=1000', s)
+# fetch loan types
+loanTypesJson = fetch_json(testServer,s,'/loan-types?limit=1000')
 
 # fetch material types
-#materialTypesUrl = '{}{}'.format(testServer, '/material-types?limit=1000')
-#materialTypesRequest = s.get(materialTypesUrl)
-materialTypesJson = fetch_json(testServer,'/material-types?limit=1000', s)
+materialTypesJson = fetch_json(testServer,s,'/material-types?limit=1000')
 
 # fetch locations
-#locationsUrl = '{}{}'.format(testServer, '/locations?limit=1500')
-#locationsRequest = s.get(locationsUrl)
-locationsJson = fetch_json(testServer,'/locations?limit=1500', s)
+locationsJson = fetch_json(testServer,s,'/locations?limit=1500')
 
 # fetch loan policies
-#loanPoliciesUrl = '{}{}'.format(testServer, '/loan-policy-storage/loan-policies?limit=500')
-#loanPoliciesRequest = s.get(loanPoliciesUrl)
-loanPoliciesJson = fetch_json(testServer, '/loan-policy-storage/loan-policies?limit=500', s)
+loanPoliciesJson = fetch_json(testServer,s, '/loan-policy-storage/loan-policies?limit=500')
 
 # fetch notice policies
-#noticePoliciesUrl = '{}{}'.format(testServer, '/patron-notice-policy-storage/patron-notice-policies?limit=100')
-#noticePoliciesRequest = s.get(noticePoliciesUrl)
-noticePoliciesJson = fetch_json(testServer, '/patron-notice-policy-storage/patron-notice-policies?limit=100', s)
+noticePoliciesJson = fetch_json(testServer, s,'/patron-notice-policy-storage/patron-notice-policies?limit=100')
 
 # fetch request policies
-#requestPoliciesUrl = '{}{}'.format(testServer, '/request-policy-storage/request-policies?limit=50')
-#requestPoliciesRequest = s.get(requestPoliciesUrl)
-requestPoliciesJson = fetch_json(testServer, '/request-policy-storage/request-policies?limit=50', s)
+requestPoliciesJson = fetch_json(testServer, s,'/request-policy-storage/request-policies?limit=50')
 
 # fetch overdue policies
-#overduePoliciesUrl = '{}{}'.format(testServer, '/overdue-fines-policies?limit=100')
-#overduePoliciesRequest = s.get(overduePoliciesUrl)
-overduePoliciesJson = fetch_json(testServer, '/overdue-fines-policies?limit=100', s)
+overduePoliciesJson = fetch_json(testServer,s, '/overdue-fines-policies?limit=100')
 
 # fetch lost item policies
-#lostItemPoliciesUrl = '{}{}'.format(testServer, '/lost-item-fees-policies?limit=100')
-#lostItemPoliciesRequest = s.get(lostItemPoliciesUrl)
-lostItemPoliciesJson = fetch_json(testServer,'/lost-item-fees-policies?limit=100', s)
+lostItemPoliciesJson = fetch_json(testServer,s,'/lost-item-fees-policies?limit=100')
 #fetch libraries
-#librariesUrl = '{}{}'.format(testServer, '/location-units/libraries?limit=100')
-#librariesRequest = s.get(librariesUrl)
-librariesJson = fetch_json(testServer,'/location-units/libraries?limit=100', s)
+librariesJson = fetch_json(testServer,s,'/location-units/libraries?limit=100')
 
 
 # open the file with test information - assumes name of file is loan_tester.csv but that's easy to change
@@ -222,32 +206,30 @@ for count, row in enumerate(testLoanScenarios):
     # you could make one giant loop for this, but I found that it seemed like I got a bit of a performance improvement by 
     # doing individual loops through the smaller chunks of data / discrete sections
 
-    postLoanPolicies = requests.get(urlLoanPolicy, headers=postHeaders)
-    postLoanPoliciesJson = postLoanPolicies.json()
+    #postLoanPolicies = requests.get(urlLoanPolicy, headers=postHeaders)
+    postLoanPoliciesJson = fetch_json(urlLoanPolicy,s)
     for i in loanPoliciesJson['loanPolicies']:
         if i['id'] == postLoanPoliciesJson['loanPolicyId']:
             friendlyResults['loanPolicy'] = i['name']
 
-    postRequestPolicies = requests.get(urlRequestPolicy, headers=postHeaders)
-    postRequestPoliciesJson = postRequestPolicies.json()
+
+    postRequestPoliciesJson = fetch_json(urlRequestPolicy, s)
     for i in requestPoliciesJson['requestPolicies']:
         if i['id'] == postRequestPoliciesJson['requestPolicyId']:
             friendlyResults['requestPolicy'] = i['name']
     
-    postNoticePolicies = requests.get(urlNoticePolicy, headers=postHeaders)
-    postNoticePoliciesJson = postNoticePolicies.json()
+    postNoticePoliciesJson = fetch_json(urlNoticePolicy,s)
     for i in noticePoliciesJson['patronNoticePolicies']:
         if i['id'] == postNoticePoliciesJson['noticePolicyId']:
             friendlyResults['noticePolicy'] = i['name']
             
-    postOverduePolicies = requests.get(urlOverduePolicy, headers=postHeaders)
-    postOverduePoliciesJson = postOverduePolicies.json()
+    
+    postOverduePoliciesJson =fetch_json(urlOverduePolicy, s)
     for i in overduePoliciesJson['overdueFinePolicies']:
         if i['id'] == postOverduePoliciesJson['overdueFinePolicyId']:
             friendlyResults['overduePolicy'] = i['name']
             
-    postLostItemPolicies = requests.get(urlLostItemPolicy, headers=postHeaders)
-    postLostItemPoliciesJson = postLostItemPolicies.json()
+    postLostItemPoliciesJson = fetch_json(urlLostItemPolicy,s)
     for i in lostItemPoliciesJson['lostItemFeePolicies']:
         if i['id'] == postLostItemPoliciesJson['lostItemPolicyId']:
             friendlyResults['lostItemPolicy'] = i['name']
