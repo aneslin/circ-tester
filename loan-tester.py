@@ -28,7 +28,10 @@
 import requests
 import csv
 import sys
+from functools import lru_cache
 from datetime import datetime
+
+from tomlkit import item
 import tk_token
 ## Set up variables for use in the script
 ## If you are repurposing this for another institution, you'll want to add the 
@@ -89,7 +92,6 @@ def fetch_json(server, session, *args ):
     else:
         url=server
     req = session.get(url)
-    
     return req.json()
 
 # fetch patron groups
@@ -141,6 +143,12 @@ friendlyResults = {}
 
 testLoanScenarios = csv.DictReader(initialFile, dialect='excel')
 
+
+def make_friendly(id, json_list, key):
+    for i in json_list:
+        if i['id'] == id:
+            return i[key]
+
 for count, row in enumerate(testLoanScenarios):
     # provides a simple counter and output to know the script is still running
     print(count, row)
@@ -150,25 +158,27 @@ for count, row in enumerate(testLoanScenarios):
     patron_type_id, loan_type_id, item_type_id, location_id = row["patron_type_id"], row["loan_type_id"],  row["item_type_id"], row["location_id"]
 
     # pull patron_type_id friendly name
-    for i in patronGroupsJson['usergroups']:
-        if i['id'] == patron_type_id:
-            friendlyResults['patron_group'] = i['group']
+    #for i in patronGroupsJson['usergroups']:
+       # if i['id'] == patron_type_id:
+           # friendlyResults['patron_group'] = i['group']
+
+    friendlyResults['patron_group'] = make_friendly(patron_type_id, patronGroupsJson['usergroups'], 'group')
     if not 'patron_group' in friendlyResults:
         friendlyResults['patron_group'] = "Patron group not found"
 
 
     # pull loan type friendly name
-    for i in loanTypesJson['loantypes']:
-        if i['id'] == loan_type_id:
-            friendlyResults['loan_type'] = i['name']
+    #for i in loanTypesJson['loantypes']:
+    #    if i['id'] == loan_type_id:
+    friendlyResults['loan_type'] = make_friendly(loan_type_id,loanTypesJson['loantypes'], 'name' )
     if not 'loan_type' in friendlyResults:
         friendlyResults['loan_type'] = "Loan type not found"
     
 
     # pull material type friendly name (API refers to it as item_type_id) 
-    for i in materialTypesJson['mtypes']:
-        if i['id'] == item_type_id:
-            friendlyResults['material_type'] = i['name']
+    #for i in materialTypesJson['mtypes']:
+        #if i['id'] == item_type_id:
+    friendlyResults['material_type'] = make_friendly(item_type_id,materialTypesJson['mtypes'],'name')
     if not 'material_type' in friendlyResults:
         friendlyResults['material_type'] = "Material type not found"
 
@@ -177,7 +187,6 @@ for count, row in enumerate(testLoanScenarios):
     #
     # also pulling library friendly name so that it can be used in sorting/reviewing results in the
     # output file
-    print(noticePoliciesJson)
     for i in locationsJson['locations']:
         if i['id'] == location_id: # once you find the location ....
             for j in librariesJson['loclibs']: # use the location to search your stored copy of the libraries Json
@@ -206,7 +215,6 @@ for count, row in enumerate(testLoanScenarios):
     # you could make one giant loop for this, but I found that it seemed like I got a bit of a performance improvement by 
     # doing individual loops through the smaller chunks of data / discrete sections
 
-    #postLoanPolicies = requests.get(urlLoanPolicy, headers=postHeaders)
     postLoanPoliciesJson = fetch_json(urlLoanPolicy,s)
     for i in loanPoliciesJson['loanPolicies']:
         if i['id'] == postLoanPoliciesJson['loanPolicyId']:
