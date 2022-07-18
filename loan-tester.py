@@ -48,6 +48,12 @@ def make_friendly(id, json_list, key):
             return  i[key]
 
 
+def makeUrl(base_url,endpoint, loan_type, item_type, patron_type, location_type):
+    return f"{base_url}{endpoint}loan_type_id={loan_type}&item_type_id={item_type}'&patron_type_id={patron_type}&location_id={location_type}"
+    
+
+
+
 
 def main():
     ## Set up variables for use in the script
@@ -205,11 +211,34 @@ def main():
     
         # first, let's make the URLs
     
-        urlLoanPolicy = '{}{}{}{}{}{}{}{}{}{}'.format(testServer, '/circulation/rules/loan-policy?' , 'loan_type_id=', loan_type_id, '&item_type_id=', item_type_id, '&patron_type_id=', patron_type_id, '&location_id=', location_id)
-        urlRequestPolicy = '{}{}{}{}{}{}{}{}{}{}'.format(testServer, '/circulation/rules/request-policy?' , 'loan_type_id=', loan_type_id, '&item_type_id=', item_type_id, '&patron_type_id=', patron_type_id, '&location_id=', location_id)
-        urlNoticePolicy = '{}{}{}{}{}{}{}{}{}{}'.format(testServer, '/circulation/rules/notice-policy?' , 'loan_type_id=', loan_type_id, '&item_type_id=', item_type_id, '&patron_type_id=', patron_type_id, '&location_id=', location_id)
-        urlOverduePolicy = '{}{}{}{}{}{}{}{}{}{}'.format(testServer, '/circulation/rules/overdue-fine-policy?' , 'loan_type_id=', loan_type_id, '&item_type_id=', item_type_id, '&patron_type_id=', patron_type_id, '&location_id=', location_id)
-        urlLostItemPolicy = '{}{}{}{}{}{}{}{}{}{}'.format(testServer, '/circulation/rules/lost-item-policy?' , 'loan_type_id=', loan_type_id, '&item_type_id=', item_type_id, '&patron_type_id=', patron_type_id, '&location_id=', location_id)
+        urlLoanPolicy = makeUrl(testServer, 
+                                '/circulation/rules/loan-policy?', 
+                                 
+                                loan_type_id, 
+                               
+                                item_type_id, 
+                               
+                                patron_type_id, 
+                               
+                                location_id)
+        urlRequestPolicy = makeUrl(testServer, 
+                                    '/circulation/rules/request-policy?' , 
+                                    
+                                    loan_type_id, 
+                                    
+                                    item_type_id, 
+                                  
+                                    patron_type_id, 
+                                    
+                                    location_id)
+        urlNoticePolicy = makeUrl(testServer, 
+                                '/circulation/rules/notice-policy?' , 
+                               
+                                loan_type_id, 
+                                
+        item_type_id,  patron_type_id, location_id)
+        urlOverduePolicy = makeUrl(testServer, '/circulation/rules/overdue-fine-policy?',loan_type_id,item_type_id,  patron_type_id, location_id)
+        urlLostItemPolicy = makeUrl(testServer, '/circulation/rules/lost-item-policy?' ,  loan_type_id,  item_type_id, patron_type_id, location_id)
 
         # now, check all of the policies.
         # 
