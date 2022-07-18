@@ -45,7 +45,7 @@ def fetch_json(server, session, *args ):
 def make_friendly(id, json_list, key):
     for i in json_list:
         if i['id'] == id:
-            return i[key]
+            return  i[key]
 
 
 
@@ -164,41 +164,36 @@ def main():
         patron_type_id, loan_type_id, item_type_id, location_id = row["patron_type_id"], row["loan_type_id"],  row["item_type_id"], row["location_id"]
 
         # pull patron_type_id friendly name
-        #for i in patronGroupsJson['usergroups']:
-        # if i['id'] == patron_type_id:
-            # friendlyResults['patron_group'] = i['group']
-
         friendlyResults['patron_group'] = make_friendly(patron_type_id, patronGroupsJson['usergroups'], 'group')
         if not 'patron_group' in friendlyResults:
             friendlyResults['patron_group'] = "Patron group not found"
 
 
         # pull loan type friendly name
-        #for i in loanTypesJson['loantypes']:
-        #    if i['id'] == loan_type_id:
         friendlyResults['loan_type'] = make_friendly(loan_type_id,loanTypesJson['loantypes'], 'name' )
         if not 'loan_type' in friendlyResults:
             friendlyResults['loan_type'] = "Loan type not found"
     
 
         # pull material type friendly name (API refers to it as item_type_id) 
-        #for i in materialTypesJson['mtypes']:
-            #if i['id'] == item_type_id:
+
         friendlyResults['material_type'] = make_friendly(item_type_id,materialTypesJson['mtypes'],'name')
         if not 'material_type' in friendlyResults:
             friendlyResults['material_type'] = "Material type not found"
 
         # pull location friendly name - using location code since a lot of our location names have commas in them
-        # which makes working with CSV a little too messy
+        # which makes working with CSV a little too messy+df
         #
         # also pulling library friendly name so that it can be used in sorting/reviewing results in the
         # output file
         for i in locationsJson['locations']:
             if i['id'] == location_id: # once you find the location ....
-                for j in librariesJson['loclibs']: # use the location to search your stored copy of the libraries Json
-                    if i['libraryId'] == j['id']: # to find the associated library
-                        friendlyResults['library_name'] = j['name'] # and pull the name
                 friendlyResults['location'] = i['code'] # finally, add the location code so that it shows up in that order in the output file.
+                libloc = i['libraryId']
+                break
+        friendlyResults['library_name'] = make_friendly(libloc, librariesJson['loclibs'], 'name') # and pull the name
+                    
+                
         if not 'library_name' in friendlyResults:
             friendlyResults['libraryName'], friendlyResults['location'] = "Library not found", "Location not found"
         if not 'location' in friendlyResults:
