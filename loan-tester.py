@@ -156,18 +156,20 @@ def main():
     # values are specified in UUIDs, but output will be in friendly name.
     # the API calls the material type id the "item type id" - tech debt artifact from early FOLIO, I think
 
-    initialFile = open('loan_tester.csv', newline='', encoding='utf-8-sig')
+    initialFile = open('loan_tester2.csv', newline='', encoding='utf-8-sig')
 
     # create a python dictionary to store the results with friendly names that you want to put into a file
-    friendlyResults = {}
-
+    
+    final_output = []
     # turn your file of patron/loan/material type/location into python dictionary that can be
     # used to query the APIs
 
     testLoanScenarios = csv.DictReader(initialFile, dialect='excel')
     pftime = perf_counter()
     startTime = datetime.now()
+
     for count, row in enumerate(testLoanScenarios):
+        friendlyResults = {}
         # provides a simple counter and output to know the script is still running
         print(count, row)
 
@@ -202,13 +204,13 @@ def main():
         # output file
 
         # lookup location id in locdict and return code and library Id
-        print(locdict[location_id]["code"])
+
         friendlyResults['locations'] = locdict[location_id]["code"]
         libloc = locdict[location_id]['libloc']
 
         friendlyResults['libraryName'] = make_friendly(
             libloc, librariesJson['loclibs'], 'name')  # and pull the name
-        print(friendlyResults['libraryName'])
+
         if 'libraryName' not in friendlyResults:
             friendlyResults['libraryName'], friendlyResults['location'] = "Library not found", "Location not found"
         if 'locations' not in friendlyResults:
@@ -255,9 +257,17 @@ def main():
         friendlyResults['lostItemPolicy'] = make_friendly(
             postLostItemPoliciesJson['lostItemPolicyId'], lostItemPoliciesJson['lostItemFeePolicies'], 'name')
 
-        with open("friendlyOutput-%s.csv" % startTime.strftime("%d-%m-%Y-%H%M%S"), 'a', newline='') as output_file:
-            test_file = csv.writer(output_file)
-            test_file.writerow(friendlyResults.values())
+        print(friendlyResults)
+        final_output.append(friendlyResults)
+
+  
+
+    with open("friendlyOutput-%s.csv" % startTime.strftime("%d-%m-%Y-%H%M%S"), 'w', newline='') as output_file:
+        headers = set(friendlyResults.keys())
+        writer = csv.DictWriter(output_file, fieldnames=list(headers))
+        writer.writeheader()
+        for row in final_output:
+            writer.writerow(row)
 
     # when the tester is finally done, give some basic time information so you
     # know how long it took

@@ -1,3 +1,4 @@
 token.py
 tk_token.py
+*.csv
 __pycache__

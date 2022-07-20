@@ -1,8 +1,8 @@
 import requests
-import csv
+from csv import DictWriter
 import inquirer
 from itertools import product
-from datetime import datetime
+
 import tk_token
 
 
@@ -64,11 +64,11 @@ q = [
 answers = inquirer.prompt(q)
 print(answers)
 q2 = [
-    inquirer.Checkbox('chooseLoc',
+    inquirer.List('chooseLoc',
                       message="choose locations to use",
                       choices=[(x['name'], x['id'])for x in locationsJson['locations'] if x['libraryId'] == answers['chooseLibrary']]),
 
-    inquirer.List('chooseGroup',
+    inquirer.Checkbox('chooseGroup',
                   message='Choose Patron Group',
                   choices=[(x['group'], x['id']) for x in patronGroupsJson['usergroups']]),
 
@@ -86,8 +86,15 @@ loanTypesJson = fetch_json(testServer, s, '/loan-types?limit=1000')
 loan_type_ids = list_maker(loanTypesJson['loantypes'])
 
 # fetch material types
+print(len(loan_type_ids) )
+z = [answers2['chooseGroup'],answers2['chooseMaterials'],loan_type_ids, [answers2['chooseLoc']]]
+print(z)
+x = list(product(*z))
 
-
-x = list(product(answers2['chooseGroup'],
-         answers2['chooseMaterials'], loan_type_ids, answers2['chooseLoc']))
-print(x, len(x))
+headers = ['patron_type_id','item_type_id','loan_type_id','location_id']
+with open('loan_tester2_csv','w', newline='') as output:
+    writer = DictWriter(output, fieldnames=headers)
+    writer.writeheader()
+    for row in x:
+        print(row)
+        writer.writerow({'patron_type_id':row[0], 'item_type_id': row[1],'loan_type_id':row[2], 'location_id':row[3] })
