@@ -19,7 +19,7 @@ def list_maker(arr):
     return [x['id'] for x in arr]
 
 
-snapshot2Environment = "https://okapi-fivecolleges-sandbox.folio.ebsco.com"
+snapshot2Environment = "https://okapi-fivecolleges.folio.ebsco.com"
 
 # tenant names
 snapshot2Tenant = "fs00001006"
@@ -48,7 +48,8 @@ patronGroupsJson = fetch_json(testServer, s, '/groups?limit=1000')
 locationsJson = fetch_json(testServer, s, '/locations?limit=1500')
 #loc_list = [(x['name'], x['id'])for x in locationsJson['locations'] if x['libraryId'] == "d7ec037d-a08e-4ef1-9d4b-bee6cb7edffa"]
 # print(loc_list)
-
+loanTypesJson = fetch_json(testServer, s, '/loan-types?limit=1000')
+loan_type_ids = list_maker(loanTypesJson['loantypes'])
 
 materialTypesJson = fetch_json(testServer, s, '/material-types?limit=1000')
 
@@ -64,13 +65,19 @@ q = [
 answers = inquirer.prompt(q)
 print(answers)
 q2 = [
+
+    inquirer.Checkbox('chooseloan',
+                      message='Choose loan type',
+                      choices=[(x['name'], x['id']) for x in loanTypesJson['loantypes']]),
     inquirer.List('chooseLoc',
-                      message="choose locations to use",
-                      choices=[(x['name'], x['id'])for x in locationsJson['locations'] if x['libraryId'] == answers['chooseLibrary']]),
+                  message="choose locations to use",
+                  choices=[(x['name'], x['id'])for x in locationsJson['locations'] if x['libraryId'] == answers['chooseLibrary']]),
 
     inquirer.Checkbox('chooseGroup',
-                  message='Choose Patron Group',
-                  choices=[(x['group'], x['id']) for x in patronGroupsJson['usergroups']]),
+                      message='Choose Patron Group',
+                      choices=[(x['group'], x['id']) for x in patronGroupsJson['usergroups']]),
+
+
 
     inquirer.Checkbox('chooseMaterials',
                       message='Select Material types',
@@ -82,19 +89,20 @@ print(answers2)
 
 
 # fetch loan types
-loanTypesJson = fetch_json(testServer, s, '/loan-types?limit=1000')
-loan_type_ids = list_maker(loanTypesJson['loantypes'])
+
 
 # fetch material types
-print(len(loan_type_ids) )
-z = [answers2['chooseGroup'],answers2['chooseMaterials'],loan_type_ids, [answers2['chooseLoc']]]
+print(len(loan_type_ids))
+z = [answers2['chooseGroup'], answers2['chooseMaterials'],
+     loan_type_ids, [answers2['chooseLoc']]]
 print(z)
 x = list(product(*z))
 
-headers = ['patron_type_id','item_type_id','loan_type_id','location_id']
-with open('loan_tester2_csv','w', newline='') as output:
+headers = ['patron_type_id', 'item_type_id', 'loan_type_id', 'location_id']
+with open('loan_tester2.csv', 'w', newline='') as output:
     writer = DictWriter(output, fieldnames=headers)
     writer.writeheader()
     for row in x:
         print(row)
-        writer.writerow({'patron_type_id':row[0], 'item_type_id': row[1],'loan_type_id':row[2], 'location_id':row[3] })
+        writer.writerow(
+            {'patron_type_id': row[0], 'item_type_id': row[1], 'loan_type_id': row[2], 'location_id': row[3]})

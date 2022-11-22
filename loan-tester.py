@@ -25,6 +25,7 @@
 ##
 # These permissions are hidden by default, so you will need administrator access to assign these permissions to a user.
 
+from ast import arg
 import requests
 import csv
 import sys
@@ -34,11 +35,15 @@ import tk_token
 
 
 def fetch_json(server, session, *args):
+    
     if args:
         url = f'{server}{"".join(args)}'
+        
     else:
         url = server
+        
     req = session.get(url)
+    
     return req.json()
 
 
@@ -67,7 +72,7 @@ def main():
 
     # okapi environments that can be used
     snapshotEnvironment = "https://folio-snapshot-okapi.dev.folio.org"
-    snapshot2Environment = "https://okapi-fivecolleges-sandbox.folio.ebsco.com"
+    snapshot2Environment = "https://okapi-fivecolleges.folio.ebsco.com"
 
     # tenant names
     snapshotTenant = "diku"
@@ -156,7 +161,7 @@ def main():
     # values are specified in UUIDs, but output will be in friendly name.
     # the API calls the material type id the "item type id" - tech debt artifact from early FOLIO, I think
 
-    initialFile = open('loan_tester2.csv', newline='', encoding='utf-8-sig')
+    initialFile = open('loan_tester2.csv', newline='', encoding='utf-8')
 
     # create a python dictionary to store the results with friendly names that you want to put into a file
     
@@ -164,10 +169,10 @@ def main():
     # turn your file of patron/loan/material type/location into python dictionary that can be
     # used to query the APIs
 
-    testLoanScenarios = csv.DictReader(initialFile, dialect='excel')
+    testLoanScenarios = csv.DictReader(initialFile)
     pftime = perf_counter()
     startTime = datetime.now()
-
+    count=0
     for count, row in enumerate(testLoanScenarios):
         friendlyResults = {}
         # provides a simple counter and output to know the script is still running
@@ -175,20 +180,21 @@ def main():
 
         # first thing is to pull the UUIDs; you'll need these to look up the friendly names, and to
         # correctly form the API call to see what policy comes back
+        
         patron_type_id, loan_type_id, item_type_id, location_id = row[
             "patron_type_id"], row["loan_type_id"],  row["item_type_id"], row["location_id"]
 
         # pull patron_type_id friendly name
         friendlyResults['patron_group'] = make_friendly(
-            patron_type_id, patronGroupsJson['usergroups'], 'group')
+                patron_type_id, patronGroupsJson['usergroups'], 'group')
         if 'patron_group' not in friendlyResults:
-            friendlyResults['patron_group'] = "Patron group not found"
+                friendlyResults['patron_group'] = "Patron group not found"
 
-        # pull loan type friendly name
+            # pull loan type friendly name
         friendlyResults['loan_type'] = make_friendly(
-            loan_type_id, loanTypesJson['loantypes'], 'name')
+                loan_type_id, loanTypesJson['loantypes'], 'name')
         if 'loan_type' not in friendlyResults:
-            friendlyResults['loan_type'] = "Loan type not found"
+                friendlyResults['loan_type'] = "Loan type not found"
 
         # pull material type friendly name (API refers to it as item_type_id)
 
@@ -236,34 +242,36 @@ def main():
         #
         # you could make one giant loop for this, but I found that it seemed like I got a bit of a performance improvement by
         # doing individual loops through the smaller chunks of data / discrete sections
-
+        
         postLoanPoliciesJson = fetch_json(urlLoanPolicy, s)
+        
         friendlyResults['loanPolicy'] = make_friendly(
             postLoanPoliciesJson['loanPolicyId'], loanPoliciesJson['loanPolicies'], 'name')
 
         postRequestPoliciesJson = fetch_json(urlRequestPolicy, s)
         friendlyResults['requestPolicy'] = make_friendly(
-            postRequestPoliciesJson['requestPolicyId'], requestPoliciesJson['requestPolicies'], 'name')
+        postRequestPoliciesJson['requestPolicyId'], requestPoliciesJson['requestPolicies'], 'name')
 
         postNoticePoliciesJson = fetch_json(urlNoticePolicy, s)
         friendlyResults['noticePolicy'] = make_friendly(
-            postNoticePoliciesJson['noticePolicyId'], noticePoliciesJson['patronNoticePolicies'], 'name')
+        postNoticePoliciesJson['noticePolicyId'], noticePoliciesJson['patronNoticePolicies'], 'name')
 
         postOverduePoliciesJson = fetch_json(urlOverduePolicy, s)
         friendlyResults['overduePolicy'] = make_friendly(
-            postOverduePoliciesJson['overdueFinePolicyId'], overduePoliciesJson['overdueFinePolicies'], 'name')
+        postOverduePoliciesJson['overdueFinePolicyId'], overduePoliciesJson['overdueFinePolicies'], 'name')
 
         postLostItemPoliciesJson = fetch_json(urlLostItemPolicy, s)
         friendlyResults['lostItemPolicy'] = make_friendly(
-            postLostItemPoliciesJson['lostItemPolicyId'], lostItemPoliciesJson['lostItemFeePolicies'], 'name')
+        postLostItemPoliciesJson['lostItemPolicyId'], lostItemPoliciesJson['lostItemFeePolicies'], 'name')
 
         print(friendlyResults)
         final_output.append(friendlyResults)
+        
 
   
 
     with open("friendlyOutput-%s.csv" % startTime.strftime("%d-%m-%Y-%H%M%S"), 'w', newline='') as output_file:
-        headers = set(friendlyResults.keys())
+        headers = ['loan_type', 'patron_group',  'libraryName','locations', 'material_type', 'loanPolicy',  'overduePolicy','noticePolicy','lostItemPolicy','requestPolicy'     ]
         writer = csv.DictWriter(output_file, fieldnames=list(headers))
         writer.writeheader()
         for row in final_output:

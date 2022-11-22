@@ -2,3 +2,4 @@ token.py
 tk_token.py
 *.csv
 __pycache__
+scratch.py
